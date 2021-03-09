@@ -36,7 +36,7 @@ start:
   .INCLUDE "./includes/lcd.s"
 
 greeting:
-  .STRING " sieee!!"
+  .STRING "Hello, world!"
 
   ; reset vector
   .ORG  $fffc

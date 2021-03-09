@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+if [[ -z "${IP}" ]]; then
+  echo "Missing IP env var!"
+  exit 1
+fi
+
+vasm6502_oldstyle -Fbin -dotdir $1
+curl http://$IP/stop_clock
+ruby ./tools/trim_out.rb
+curl --request POST --url http://$IP/write --data-binary "@b.out"
+curl http://$IP/reset
