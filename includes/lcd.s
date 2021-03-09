@@ -81,10 +81,36 @@ FUNC_setup_via_for_lcd:
   PLA
   RTS
 
+FUNC_wait_lcd_ready:
+  PHA
+
+  LDA #%00000000                                    ; temporarly set all lines of the VIA register B to inputs
+  STA DATA_DIRECTION_REGISTER_B
+
+wait_lcd_loop:
+  LDA #DISPLAY_RW_PIN                               ; set RW pin
+  STA REGISTER_A
+
+  LDA #(DISPLAY_RW_PIN | DISPLAY_ENABLE_PIN)        ; toggle the enable bit to trigger
+  STA REGISTER_A
+
+  LDA REGISTER_B                                    ; read the busy flag and address
+
+  AND #%10000000                                    ; check if the busy flag (first bit in A) is set or not
+  BNE wait_lcd_loop                                 ; keep looping if it's zero flag is not 0
+
+  LDA #%11111111                                    ; restore all lines of the VIA register B to outputs
+  STA DATA_DIRECTION_REGISTER_B
+
+  PLA
+  RTS
+
 FUNC_send_lcd_instruction__A:
   PHA
 
   PHA                        ; we push it another time so that we can reuse it below
+
+  JSR FUNC_wait_lcd_ready
 
   LDA #0                     ; clear RS/RW/E
   STA REGISTER_A
@@ -104,6 +130,8 @@ FUNC_send_lcd_instruction__A:
 FUNC_print_char__A:
   PHA
 
+  JSR FUNC_wait_lcd_ready
+
   STA REGISTER_B
 
   LDA #DISPLAY_RS_PIN        ; set RS ping
@@ -114,8 +142,6 @@ FUNC_print_char__A:
 
   LDA #DISPLAY_RS_PIN        ; set and clear ENABLE pin to send command
   STA REGISTER_A
-
-  JSR FUNC_sleep
 
   PLA
   RTS
@@ -138,25 +164,6 @@ print_string__loop:
   JMP print_string__loop
 
 print_string__done_printing:
-  PLA
-  TAY
-
-  PLA
-  RTS
-
-FUNC_sleep:
-  PHA
-  TYA
-  PHA
-
-  LDY #0
-
-sleep__loop:
-  NOP
-  INY
-  CPY #$fe
-  BNE sleep__loop
-
   PLA
   TAY
 

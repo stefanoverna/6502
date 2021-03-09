@@ -22,14 +22,13 @@ start:
   LDA #(LCD_CMD_CLEAR_DISPLAY)
   JSR FUNC_send_lcd_instruction__A
 
-  LDA #"X"
-  JSR FUNC_print_char__A
-
   LDA #<greeting
   STA ARG_Pointer
   LDA #>greeting
   STA ARG_Pointer + 1
   JSR FUNC_print_string__ARG_Pointer
+
+  JSR FUNC_sleep
 
   JMP start
 
