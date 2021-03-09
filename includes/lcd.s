@@ -65,6 +65,7 @@ LCD_CMD_SET_CGRAM_ADDRESS = %01000000
 
 LCD_CMD_CLEAR_DISPLAY = %0000001
 
+ARG_Pointer = $01
 
 FUNC_setup_via_for_lcd:
   PHA
@@ -114,18 +115,20 @@ FUNC_print_char__A:
   LDA #DISPLAY_RS_PIN        ; set and clear ENABLE pin to send command
   STA REGISTER_A
 
+  JSR FUNC_sleep
+
   PLA
   RTS
 
-FUNC_print_string__A:
-  STA $01
+FUNC_print_string__ARG_Pointer:
+  PHA
 
   TYA
   PHA
 
   LDY #0
 print_string__loop:
-  LDA $01, Y
+  LDA (ARG_Pointer), Y
   CMP #$0
   BEQ print_string__done_printing
 
@@ -138,7 +141,7 @@ print_string__done_printing:
   PLA
   TAY
 
-  LDA $01
+  PLA
   RTS
 
 FUNC_sleep:
@@ -149,6 +152,7 @@ FUNC_sleep:
   LDY #0
 
 sleep__loop:
+  NOP
   INY
   CPY #$fe
   BNE sleep__loop
@@ -158,43 +162,3 @@ sleep__loop:
 
   PLA
   RTS
-
-
-
-
-  .MACRO SETUP_VIA_FOR_LCD
-    ; set all lines of the VIA register B to outputs
-    LDA #%11111111
-    STA DATA_DIRECTION_REGISTER_B
-
-    ; set top 3 lines of the VIA register A to outputs
-    LDA #%11100000
-    STA DATA_DIRECTION_REGISTER_A
-  .ENDMACRO
-
-  .MACRO SEND_INSTRUCTION, instruction
-    LDA #0                     ; clear RS/RW/E
-    STA REGISTER_A
-
-    LDA #\1                    ; fill in DBX pins...
-    STA REGISTER_B
-
-    LDA #DISPLAY_ENABLE_PIN    ; set and..
-    STA REGISTER_A
-
-    LDA #0                     ; ...clear ENABLE pin to send command
-    STA REGISTER_A
-  .ENDMACRO
-
-  .MACRO WRITE_DATA_IN_A
-    STA REGISTER_B
-
-    LDA #DISPLAY_RS_PIN        ; set RS ping
-    STA REGISTER_A
-
-    LDA #(DISPLAY_RS_PIN | DISPLAY_ENABLE_PIN)
-    STA REGISTER_A
-
-    LDA #DISPLAY_RS_PIN        ; set and clear ENABLE pin to send command
-    STA REGISTER_A
-  .ENDMACRO

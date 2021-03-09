@@ -1,12 +1,11 @@
-  .INCLUDE "./includes/setup.s"
-  .INCLUDE "./includes/lcd.s"
-
   ; tells the compiler where this code will
   ; be available (from the processor's perspective)
   .ORG $8000
 
-reset:
-  SETUP_STACK
+main:
+  ; stack starts from 01ff
+  LDX #$ff
+  TXS
 
   JSR FUNC_setup_via_for_lcd
 
@@ -26,17 +25,21 @@ start:
   LDA #"X"
   JSR FUNC_print_char__A
 
-  LDA greeting
-  JSR FUNC_print_string__A
-
-  JSR FUNC_sleep
+  LDA #<greeting
+  STA ARG_Pointer
+  LDA #>greeting
+  STA ARG_Pointer + 1
+  JSR FUNC_print_string__ARG_Pointer
 
   JMP start
+
+  .INCLUDE "./includes/setup.s"
+  .INCLUDE "./includes/lcd.s"
 
 greeting:
   .STRING " sieee!!"
 
   ; reset vector
   .ORG  $fffc
-  .WORD reset
+  .WORD main
   .WORD $0000
